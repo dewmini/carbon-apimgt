@@ -29,7 +29,10 @@ import org.wso2.carbon.apimgt.core.exception.ExceptionCodes;
 import org.wso2.carbon.apimgt.core.exception.GatewayException;
 import org.wso2.carbon.apimgt.core.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.core.models.API;
+import org.wso2.carbon.apimgt.core.template.dto.APIDTO;
 import org.wso2.carbon.apimgt.core.template.dto.GatewayConfigDTO;
+import org.wso2.carbon.apimgt.core.template.dto.TemplateDTO;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -103,42 +106,69 @@ public class APIGatewayPublisherImpl implements APIGatewayPublisher {
                 }
             }
             return true;
-        } catch (JMSException e) {
-            log.error("Error deploying API configuration for API " + api.getName(), e);
-            throw new GatewayException("Error deploying API configuration for API " + api.getName(),
-                    ExceptionCodes.GATEWAY_EXCEPTION);
-        } catch (URLSyntaxException e) {
-            log.error("Error deploying API configuration for API " + api.getName(), e);
-            throw new GatewayException("Error generating API configuration for API " + api.getName(),
-                    ExceptionCodes.GATEWAY_EXCEPTION);
+        } catch (GatewayException e) {
+            String errorMsg = "Error while publishing to the gateway";
+            log.error(errorMsg, e);
+            throw new GatewayException(errorMsg, ExceptionCodes.GATEWAY_EXCEPTION);
         }
     }
 
     /**
      * Publishing the API config to gateway
      *
-     * @param dto GatewayConfigDTO to be published
+     * @param dto DTO to be published
      * @throws JMSException       if JMS issue is occurred
      * @throws URLSyntaxException If connection String is invalid
      */
-    private void publishMessage(GatewayConfigDTO dto) throws JMSException, URLSyntaxException {
+    private void publishMessage(TemplateDTO dto) throws GatewayException {
         // create connection factory
-        TopicConnectionFactory connFactory = new AMQConnectionFactory(
-                getTCPConnectionURL(config.getUsername(), config.getPassword()));
-        TopicConnection topicConnection = connFactory.createTopicConnection();
-        topicConnection.start();
-        TopicSession topicSession = topicConnection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
-        // Send message
-        Topic topic = topicSession.createTopic(config.getTopicName());
+        TopicConnection topicConnection = null;
+        TopicSession topicSession = null;
+        TopicPublisher topicPublisher = null;
+        try {
+            TopicConnectionFactory connFactory = new AMQConnectionFactory(
+                    getTCPConnectionURL(config.getUsername(), config.getPassword()));
+            topicConnection = connFactory.createTopicConnection();
+            topicConnection.start();
+            topicSession = topicConnection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
+            // Send message
+            Topic topic = topicSession.createTopic(config.getTopicName());
 
-        TextMessage textMessage = topicSession.createTextMessage(new Gson().toJson(dto));
-        TopicPublisher topicPublisher = topicSession.createPublisher(topic);
-        topicPublisher.publish(textMessage);
-
-        topicPublisher.close();
-        topicSession.close();
-        topicConnection.stop();
-        topicConnection.close();
+            TextMessage textMessage = topicSession.createTextMessage(new Gson().toJson(dto));
+            topicPublisher = topicSession.createPublisher(topic);
+            topicPublisher.publish(textMessage);
+        } catch (JMSException e) {
+            String errorMsg = "Error while publishing to the gateway";
+            log.error(errorMsg, e);
+            throw new GatewayException(errorMsg, ExceptionCodes.GATEWAY_EXCEPTION);
+        } catch (URLSyntaxException e) {
+            String errorMsg = "Error while publishing to the gateway";
+            log.error(errorMsg, e);
+            throw new GatewayException(errorMsg, ExceptionCodes.GATEWAY_EXCEPTION);
+        } finally {
+            if (topicPublisher != null) {
+                try {
+                    topicPublisher.close();
+                } catch (JMSException e) {
+                    log.error("Error while closing topic publisher ", e);
+                }
+            }
+            if (topicSession != null) {
+                try {
+                    topicSession.close();
+                } catch (JMSException e) {
+                    log.error("Error while closing topic session ", e);
+                }
+            }
+            if (topicConnection != null) {
+                try {
+                    topicConnection.stop();
+                    topicConnection.close();
+                } catch (JMSException e) {
+                    log.error("Error while closing topic connection ", e);
+                }
+            }
+        }
     }
 
     /**
@@ -230,13 +260,9 @@ public class APIGatewayPublisherImpl implements APIGatewayPublisher {
                 saveEndpointConfig(gwHome, config);
             }
             return true;
-        } catch (JMSException e) {
+        } catch (GatewayException e) {
             log.error("Error deploying configuration for " + endpointConfigName, e);
             throw new GatewayException("Template " + "resources" + File.separator + "template.xml not Found",
-                    ExceptionCodes.GATEWAY_EXCEPTION);
-        } catch (URLSyntaxException e) {
-            log.error("Error deploying configuration for " + endpointConfigName, e);
-            throw new GatewayException("Error deploying configuration for " + endpointConfigName,
                     ExceptionCodes.GATEWAY_EXCEPTION);
         }
     }
@@ -278,6 +304,31 @@ public class APIGatewayPublisherImpl implements APIGatewayPublisher {
             } catch (IOException e) {
                 log.error("Error closing connections", e);
             }
+        }
+    }
+
+    /**
+     *publish API state change to the gateway
+     *
+     * @param api API object
+     * @param status new lifecycle status
+     * @return if data publishing success
+     * @throws GatewayException if publishing fails
+     */
+    @Override public boolean publishAPIStateChangeToGateway(API api, String status) throws GatewayException {
+        try {
+            APIDTO dto = new APIDTO();
+            dto.setId(api.getId());
+            dto.setApiName(api.getName());
+            dto.setContext(api.getContext());
+            dto.setVersion(api.getVersion());
+            dto.setLifeCycleState(status);
+            publishMessage(dto);
+            return true;
+        } catch (GatewayException e) {
+            String errorMsg = "Error while publishing API state change to the gateway";
+            log.error(errorMsg, e);
+            throw new GatewayException(errorMsg, ExceptionCodes.GATEWAY_EXCEPTION);
         }
     }
 }

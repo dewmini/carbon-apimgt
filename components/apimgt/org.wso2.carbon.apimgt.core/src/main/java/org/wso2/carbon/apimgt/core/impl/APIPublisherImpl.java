@@ -705,6 +705,8 @@ public class APIPublisherImpl extends AbstractAPIManager implements APIPublisher
                         }
                     }
                 }
+                //publish API state change to gateway
+                publishAPIStateChangeToGateway(originalAPI, status);
             } else {
                 throw new APIMgtResourceNotFoundException("Requested API " + apiId + " Not Available");
             }
@@ -1731,6 +1733,27 @@ public class APIPublisherImpl extends AbstractAPIManager implements APIPublisher
                 log.warn(warn, e.getLocalizedMessage());
             }
             getWorkflowDAO().deleteWorkflowEntryforExternalReference(workflowExtRef);
+        }
+    }
+
+    /**
+     * Publishing API state change to the subscribers
+     *
+     * @param api API object
+     * @param status new lifecycle status
+     * @throws GatewayException if failed to publish to gateway
+     */
+    private void publishAPIStateChangeToGateway(API api, String status) throws GatewayException {
+        //Todo broker integration should be completed
+        boolean isPublished = getApiGatewayPublisher().publishAPIStateChangeToGateway(api, status);
+       // boolean isPublished = true;
+        if (isPublished) {
+            APIUtils.logDebug("API state change of" + api.getName() + "-" + api.getVersion()
+                    + " was published to gateway successfully.", log);
+        } else {
+            //Todo handle event publishing failures
+            APIUtils.logDebug("Error when publishing API state change of" + api.getName() + "-" + api.getVersion()
+                    + " to gateway.", log);
         }
     }
 }

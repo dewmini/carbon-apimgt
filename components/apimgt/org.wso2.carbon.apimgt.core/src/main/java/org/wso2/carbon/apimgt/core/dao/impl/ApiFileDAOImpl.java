@@ -472,6 +472,14 @@ public class ApiFileDAOImpl implements ApiDAO {
         throw new UnsupportedOperationException();
     }
 
+    @Override public List<API> getAPIsByStatus(List<String> gatewayLabels, String status) throws APIMgtDAOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override public List<API> getAPIsByGatewayLabel(List<String> gatewayLabels) throws APIMgtDAOException {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * @see ApiDAO#getAPIs(ApiType)
      */

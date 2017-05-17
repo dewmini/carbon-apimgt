@@ -28,4 +28,6 @@ public interface APIGatewayPublisher {
     boolean publishToGateway(API api) throws GatewayException;
 
     boolean publishEndpointConfigToGateway(String config) throws GatewayException;
+
+    boolean publishAPIStateChangeToGateway(API api, String status) throws GatewayException;
 }

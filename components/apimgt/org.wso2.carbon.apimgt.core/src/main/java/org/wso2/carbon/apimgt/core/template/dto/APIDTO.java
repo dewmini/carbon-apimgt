@@ -1,6 +1,6 @@
 package org.wso2.carbon.apimgt.core.template.dto;
 /*
- * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,34 +18,16 @@ package org.wso2.carbon.apimgt.core.template.dto;
  */
 
 /**
- * data and config holder dto to publish as json
+ * Holds API details to be published
  */
-public class GatewayConfigDTO extends TemplateDTO {
-    private String type;
-    private String creator;
-    private String config;
+public class APIDTO extends TemplateDTO {
+    private String lifeCycleState;
 
-    public void setCreator(String creator) {
-        this.creator = creator;
+    public String getLifeCycleState() {
+        return lifeCycleState;
     }
 
-    public void setConfig(String config) {
-        this.config = config;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getCreator() {
-        return creator;
-    }
-
-    public String getConfig() {
-        return config;
+    public void setLifeCycleState(String lifeCycleState) {
+        this.lifeCycleState = lifeCycleState;
     }
 }
