@@ -273,8 +273,8 @@
                         </div>
                         <div class="panel-collapse">
                             <div class="panel-body form-group">
-                                <label class="control-label col-sm-3"><%=i18n.localize("Select an option")%>:</label>
-                                <div class="col-sm-8">
+                                <label class="control-label col-xs-3"><%=i18n.localize("Select an option")%>:</label>
+                                <div class="col-xs-8">
                                     <label class="radio" for="bundleProduct">
                                        <input type="radio" class="product_options" id ="bundleProduct" name="product_options"
                                        checked="checked" value="bundleProduct">
@@ -283,7 +283,7 @@
                                     <div class="form-group productList"><br>
                                         <label class="control-label col-xs-3"><%=i18n.localize("API Products")%>:
                                         </label>
-                                        <div class="col-lg-5">
+                                        <div class="col-xs-5">
                                             <select class="select form-control" id="apiProducts" name="apiProducts">
                                                 <%
                                                 for (var i = 0; i < products.length; i++) {
@@ -302,7 +302,7 @@
                                         <span class="helper"><%=i18n.localize("Create a new API Product an bundle with it")%></span>
                                     </label><br>
                                     <div class="form-group newProduct" style="display: none"><br>
-                                        <a class="control-label col-sm-4"><span><%=i18n.localize("Add new API Product")%></span></a>
+                                        <a class="control-label col-xs-4"><span><%=i18n.localize("Add new API Product")%></span></a>
                                     </div>
                                     <label class="radio" for="onlyAPI">
                                          <input type="radio" class="product_options" id ="onlyAPI" name="product_options" value="onlyAPI">
